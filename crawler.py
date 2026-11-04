@@ -11,7 +11,7 @@ def normalize(url):
     return parsed.geturl()
 
 
-start_url = normalize("https://quotes.toscrape.com")
+start_url = normalize("http://localhost:8080/vulnerabilities/sqli/")
 base_domain = urlparse(start_url).netloc
 max_pages = 10
 
