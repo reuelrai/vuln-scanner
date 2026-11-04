@@ -18,12 +18,10 @@ def make_session(level):
         "user_token": token,
     })
 
-    # change the existing 'security' cookie(s) instead of adding another
     for cookie in session.cookies:
         if cookie.name == "security":
             cookie.value = level
 
-    # verify: ask the server what level it thinks we're at
     home = session.get(TARGET + "/index.php")
     if f"<em>Security Level:</em> {level}" not in home.text:
         raise SystemExit(f"Could not set security level to {level}")
@@ -31,29 +29,61 @@ def make_session(level):
     return session
 
 
-def check_reflected_xss(session, form):
-    """Test each field of a GET form with the marker. Returns a list of findings."""
-    findings = []
-    if form["method"] != "get":
-        return findings                      # POST forms come later
+def get_hidden_values(session, page_url):
+    """Load a page and return its hidden form fields (like user_token)."""
+    page = session.get(page_url)
+    soup = BeautifulSoup(page.text, "html.parser")
+    values = {}
+    for field in soup.find_all("input", {"type": "hidden"}):
+        name = field.get("name")
+        if name:
+            values[name] = field.get("value", "")
+    return values
+
+
+def probe_field(session, form, field_name):
+    """Send the marker through one field. Returns: raw / escaped / blocked / not reflected."""
+    params = get_hidden_values(session, form["page"])     # fresh token every time
 
     for field in form["inputs"]:
-        # fill every field with harmless text, then put the marker in this one
-        params = {i["name"]: "test" for i in form["inputs"]}
-        params[field["name"]] = MARKER
+        params.setdefault(field["name"], "test")          # fill the other fields
+    params[field_name] = MARKER                           # marker goes in this one
 
-        response = session.get(form["action"], params=params)
+    text = session.get(form["action"], params=params).text
 
-        if MARKER in response.text:          # came back unescaped
+    if "csrf token is incorrect" in text.lower():
+        return "blocked"
+    if MARKER in text:
+        return "raw"
+    if "zq7431" in text:
+        return "escaped"
+    return "not reflected"
+
+
+def check_reflected_xss(session, form):
+    """Returns (findings, outcomes) for a GET form."""
+    findings = []
+    outcomes = {}
+
+    if form["method"] != "get":
+        return findings, outcomes                         # POST forms come later
+
+    for field in form["inputs"]:
+        if field["type"] == "hidden":
+            continue                                      # don't attack token fields
+
+        outcome = probe_field(session, form, field["name"])
+        outcomes[field["name"]] = outcome
+
+        if outcome == "raw":
             findings.append({
                 "url": form["action"],
                 "issue": f"Potential reflected XSS in field '{field['name']}'",
                 "severity": "High",
             })
-    return findings
+    return findings, outcomes
 
 
-# a hand-made form, shaped like the ones our crawler produces
 xss_form = {
     "page": TARGET + "/vulnerabilities/xss_r/",
     "action": TARGET + "/vulnerabilities/xss_r/",
@@ -63,10 +93,5 @@ xss_form = {
 
 for level in ["low", "medium", "high", "impossible"]:
     session = make_session(level)
-    response = session.get(xss_form["action"], params={"name": MARKER})
-    text = response.text
-
-    print(f"{level:11} | status {response.status_code}"
-        f" | marker present: {'zq7431' in text}"
-        f" | raw: {MARKER in text}"
-        f" | token complaint: {'csrf token is incorrect' in text.lower()}")
+    findings, outcomes = check_reflected_xss(session, xss_form)
+    print(f"{level:11} | outcomes: {outcomes} | findings: {len(findings)}")
