@@ -3,19 +3,12 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 
-
-def normalize(url):
-    parsed = urlparse(url.split("#")[0])   # drop #fragments, then split the URL into parts
-    if parsed.path == "":                  # "https://site.com" -> "https://site.com/"
-        parsed = parsed._replace(path="/")
-    return parsed.geturl()
-
-
-start_url = normalize("http://localhost:8080/vulnerabilities/sqli/")
-base_domain = urlparse(start_url).netloc
-max_pages = 10
-
-important_headers = [
+# ---------- Settings ----------
+TARGET = "http://localhost:8080"
+START_PATH = "/index.php"
+MAX_PAGES = 40
+SKIP_WORDS = ["logout", "setup"]      # never visit URLs containing these
+IMPORTANT_HEADERS = [
     "Content-Security-Policy",
     "X-Frame-Options",
     "X-Content-Type-Options",
@@ -23,11 +16,39 @@ important_headers = [
 ]
 
 
+# ---------- Helpers ----------
+def normalize(url):
+    parsed = urlparse(url.split("#")[0])
+    if parsed.path == "":
+        parsed = parsed._replace(path="/")
+    return parsed.geturl()
+
+
+def should_skip(url):
+    return any(word in url.lower() for word in SKIP_WORDS)
+
+
+def login_dvwa(session):
+    """Log in to DVWA and set difficulty to Low. Returns True on success."""
+    page = session.get(TARGET + "/login.php")
+    soup = BeautifulSoup(page.text, "html.parser")
+    token = soup.find("input", {"name": "user_token"})["value"]
+
+    data = {
+        "username": "admin",
+        "password": "password",
+        "Login": "Login",
+        "user_token": token,
+    }
+    result = session.post(TARGET + "/login.php", data=data)
+    session.cookies.set("security", "low")
+    return "Logout" in result.text
+
+
+# ---------- Checks ----------
 def check_headers(url, response):
-    """Return a list of findings for missing security headers."""
     findings = []
-    
-    for header in important_headers:
+    for header in IMPORTANT_HEADERS:
         if header == "Strict-Transport-Security" and response.url.startswith("http://"):
             continue
         if header not in response.headers:
@@ -40,7 +61,6 @@ def check_headers(url, response):
 
 
 def check_redirects(url, response):
-    """Flag pages where an HTTPS request ended up on plain HTTP."""
     findings = []
     if url.startswith("https://") and response.url.startswith("http://"):
         findings.append({
@@ -52,7 +72,6 @@ def check_redirects(url, response):
 
 
 def extract_forms(url, soup):
-    """Return a list of forms found on a page."""
     forms = []
     for form in soup.find_all("form"):
         action = form.get("action") or ""
@@ -73,36 +92,53 @@ def extract_forms(url, soup):
     return forms
 
 
+# ---------- Main crawl ----------
+session = requests.Session()
+
+if not login_dvwa(session):
+    print("Login failed. Is DVWA running and the database created?")
+    raise SystemExit(1)
+print("Logged in!\n")
+
+start_url = normalize(TARGET + START_PATH)
+base_domain = urlparse(start_url).netloc
+
 visited = set()
 to_visit = [start_url]
 all_findings = []
 all_forms = []
 
-while to_visit and len(visited) < max_pages:
+while to_visit and len(visited) < MAX_PAGES:
     url = to_visit.pop(0)
 
-    if url in visited:
+    if url in visited or should_skip(url):
         continue
 
     print("Visiting:", url)
-    response = requests.get(url)
+    response = session.get(url)
     visited.add(url)
 
     all_findings.extend(check_headers(url, response))
     all_findings.extend(check_redirects(url, response))
+
+    if "text/html" not in response.headers.get("Content-Type", ""):
+        continue
 
     soup = BeautifulSoup(response.text, "html.parser")
     all_forms.extend(extract_forms(url, soup))
 
     for link in soup.find_all("a"):
         href = link.get("href")
+        if not href:
+            continue
         full_url = normalize(urljoin(url, href))
 
         if urlparse(full_url).netloc == base_domain and full_url not in visited:
             to_visit.append(full_url)
 
-    time.sleep(1)
+    time.sleep(0.3)
 
+# ---------- Report ----------
 print("\n--- SCAN REPORT ---")
 print("Pages scanned:", len(visited))
 
