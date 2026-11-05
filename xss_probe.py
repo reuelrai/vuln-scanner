@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 
-TARGET = "http://localhost:8080"
+TARGET = "http://127.0.0.1:5500/index.html"
 MARKER = 'zq7431<b>"\''
 
 
