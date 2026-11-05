@@ -2,19 +2,7 @@ import time
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
-
-# ---------- Settings ----------
-TARGET = "http://localhost:8080"
-START_PATH = "/index.php"
-MAX_PAGES = 40
-SKIP_WORDS = ["logout", "setup"]      # never visit URLs containing these
-IMPORTANT_HEADERS = [
-    "Content-Security-Policy",
-    "X-Frame-Options",
-    "X-Content-Type-Options",
-    "Strict-Transport-Security",
-]
-
+from config import TARGET, START_PATH, USE_DVWA_LOGIN, MAX_PAGES, SKIP_WORDS, IMPORTANT_HEADERS
 
 # ---------- Helpers ----------
 def normalize(url):
