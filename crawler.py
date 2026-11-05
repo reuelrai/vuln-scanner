@@ -2,7 +2,8 @@ import time
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
-from config import TARGET, START_PATH, USE_DVWA_LOGIN, MAX_PAGES, SKIP_WORDS, IMPORTANT_HEADERS
+from config import TARGET, START_PATH, USE_DVWA_LOGIN, MAX_PAGES, SKIP_WORDS
+from checks.headers import check_headers, check_redirects
 
 # ---------- Helpers ----------
 def normalize(url):
@@ -31,32 +32,6 @@ def login_dvwa(session):
     result = session.post(TARGET + "/login.php", data=data)
     session.cookies.set("security", "low")
     return "Logout" in result.text
-
-
-# ---------- Checks ----------
-def check_headers(url, response):
-    findings = []
-    for header in IMPORTANT_HEADERS:
-        if header == "Strict-Transport-Security" and response.url.startswith("http://"):
-            continue
-        if header not in response.headers:
-            findings.append({
-                "url": url,
-                "issue": "Missing header: " + header,
-                "severity": "Low",
-            })
-    return findings
-
-
-def check_redirects(url, response):
-    findings = []
-    if url.startswith("https://") and response.url.startswith("http://"):
-        findings.append({
-            "url": url,
-            "issue": "HTTPS request redirected to insecure HTTP",
-            "severity": "Medium",
-        })
-    return findings
 
 
 def extract_forms(url, soup):
