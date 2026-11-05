@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 
 # ---------- Settings ----------
-TARGET = "http://127.0.0.1:5500/index.html"
+TARGET = "http://localhost:8080"
 START_PATH = "/index.php"
 MAX_PAGES = 40
 SKIP_WORDS = ["logout", "setup"]      # never visit URLs containing these
