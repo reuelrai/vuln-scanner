@@ -9,6 +9,9 @@ def print_report(visited, all_findings, all_forms):
 
     for (severity, issue), urls in grouped.items():
         print(f"[{severity}] {issue}  (on {len(urls)} pages)")
+        if len(urls) <= 3:
+            for u in urls:
+                print("      ->", u)
 
     print("\nForms found:", len(all_forms))
     for f in all_forms:
