@@ -20,3 +20,7 @@ ACTIVE_CHECKS = True                    # set to False when scanning anything el
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 FORM_SKIP_WORDS = ["csrf", "ids_log", "brute", "security", "setup", "logout", "exec", "upload", "xss_s"]
 SKIP_FIELD_TYPES = ["hidden", "submit", "button", "password", "file", "checkbox", "radio"]
+
+# ---------- Saving results ----------
+SAVE_RESULTS = True
+RESULTS_DIR = "results"
