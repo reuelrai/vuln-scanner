@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime
-from config import TARGET, ACTIVE_CHECKS, RESULTS_DIR
+from scanner.config import TARGET, ACTIVE_CHECKS, RESULTS_DIR
 
 
 def print_report(visited, all_findings, all_forms):

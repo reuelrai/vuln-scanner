@@ -1,5 +1,5 @@
 from urllib.parse import urlparse
-from config import ALLOWED_HOSTS, FORM_SKIP_WORDS
+from scanner.config import ALLOWED_HOSTS, FORM_SKIP_WORDS
 
 
 def host_allowed(url):

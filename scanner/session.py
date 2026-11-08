@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
-from config import TARGET, USE_DVWA_LOGIN
+from scanner.config import TARGET, USE_DVWA_LOGIN
 
 
 def make_session(level="low"):

@@ -1,4 +1,4 @@
-from config import IMPORTANT_HEADERS
+from scanner.config import IMPORTANT_HEADERS
 
 
 def check_headers(url, response):

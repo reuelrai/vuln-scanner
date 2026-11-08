@@ -1,11 +1,11 @@
 from datetime import datetime
-from session import make_session
-from crawler import crawl
-from report import print_report, save_json
-from config import ACTIVE_CHECKS, SAVE_RESULTS
-from safety import host_allowed, form_is_safe_to_test
-from checks.xss import check_reflected_xss
-from checks.sqli import check_sqli_errors
+from scanner.session import make_session
+from scanner.crawler import crawl
+from scanner.report import print_report, save_json
+from scanner.config import ACTIVE_CHECKS, SAVE_RESULTS
+from scanner.safety import host_allowed, form_is_safe_to_test
+from scanner.checks.xss import check_reflected_xss
+from scanner.checks.sqli import check_sqli_errors
 
 
 def run_active_checks(session, forms):

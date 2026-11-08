@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from config import SKIP_FIELD_TYPES
+from scanner.config import SKIP_FIELD_TYPES
 
 MARKER = 'zq7431<b>"\''
 

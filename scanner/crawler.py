@@ -1,9 +1,8 @@
 import time
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
-from config import TARGET, START_PATH, MAX_PAGES, SKIP_WORDS
-from checks.headers import check_headers, check_redirects
-from session import make_session
+from scanner.config import TARGET, START_PATH, MAX_PAGES, SKIP_WORDS
+from scanner.checks.headers import check_headers, check_redirects
 
 
 # ---------- Helpers ----------

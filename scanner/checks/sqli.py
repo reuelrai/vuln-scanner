@@ -1,5 +1,5 @@
-from config import SKIP_FIELD_TYPES
-from checks.xss import get_hidden_values
+from scanner.config import SKIP_FIELD_TYPES
+from scanner.checks.xss import get_hidden_values
 
 SQL_ERRORS = [
     "you have an error in your sql syntax",
