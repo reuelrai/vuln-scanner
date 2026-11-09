@@ -69,3 +69,10 @@ results/           saved scans (not committed)
 - Active checks handle GET forms only (POST support is planned)
 - Blind SQL injection is not detected (no visible error to read)
 - DOM-based XSS is not detected (no JavaScript is executed)
+
+
+## To do (later)
+
+- [ ] Add user accounts: two users (Rei and group partner)
+- [ ] POST form support for active checks
+- [ ] Third-party form detection (flag forms posting to another domain)
