@@ -1,7 +1,7 @@
 import time
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
-from scanner.config import TARGET, START_PATH, MAX_PAGES, SKIP_WORDS
+from scanner.config import MAX_PAGES, SKIP_WORDS
 from scanner.checks.headers import check_headers, check_redirects
 
 
@@ -39,9 +39,9 @@ def extract_forms(url, soup):
 
 
 # ---------- The crawl ----------
-def crawl(session):
+def crawl(session, target, start_path="/"):
     """Crawl the target. Returns (visited, findings, forms)."""
-    start_url = normalize(TARGET + START_PATH)
+    start_url = normalize(target.rstrip("/") + start_path)
     base_domain = urlparse(start_url).netloc
 
     visited = set()
@@ -80,30 +80,3 @@ def crawl(session):
         time.sleep(0.3)
 
     return visited, all_findings, all_forms
-
-
-# ---------- Report (moves to report.py in Step 5) ----------
-def print_report(visited, all_findings, all_forms):
-    print("\n--- SCAN REPORT ---")
-    print("Pages scanned:", len(visited))
-
-    grouped = {}
-    for finding in all_findings:
-        key = (finding["severity"], finding["issue"])
-        grouped.setdefault(key, []).append(finding["url"])
-
-    for (severity, issue), urls in grouped.items():
-        print(f"[{severity}] {issue}  (on {len(urls)} pages)")
-
-    print("\nForms found:", len(all_forms))
-    for f in all_forms:
-        names = [i["name"] for i in f["inputs"]]
-        print(f"  {f['method'].upper()} {f['action']}  inputs: {names}")
-
-
-# ---------- Runs only when you do: python crawler.py ----------
-if __name__ == "__main__":
-    session = make_session()
-    print("Session ready.\n")
-    visited, all_findings, all_forms = crawl(session)
-    print_report(visited, all_findings, all_forms)

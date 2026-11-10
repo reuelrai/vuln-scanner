@@ -2,10 +2,11 @@ from datetime import datetime
 from scanner.session import make_session
 from scanner.crawler import crawl
 from scanner.report import print_report, save_json
-from scanner.config import ACTIVE_CHECKS, SAVE_RESULTS
+from scanner.config import TARGET, START_PATH, USE_DVWA_LOGIN, ACTIVE_CHECKS, SAVE_RESULTS
 from scanner.safety import host_allowed, form_is_safe_to_test
 from scanner.checks.xss import check_reflected_xss
 from scanner.checks.sqli import check_sqli_errors
+from scanner.errors import ScanError
 
 
 def run_active_checks(session, forms):
@@ -38,10 +39,14 @@ def run_active_checks(session, forms):
 def main():
     started = datetime.now()
 
-    session = make_session()
+    try:
+        session = make_session(TARGET, USE_DVWA_LOGIN)
+    except ScanError as error:
+        print("Scan stopped:", error)
+        return
     print("Session ready.\n")
 
-    visited, all_findings, all_forms = crawl(session)
+    visited, all_findings, all_forms = crawl(session, TARGET, START_PATH)
     all_findings.extend(run_active_checks(session, all_forms))
 
     print_report(visited, all_findings, all_forms)
