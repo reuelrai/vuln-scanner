@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import datetime
-from scanner.config import TARGET, ACTIVE_CHECKS, RESULTS_DIR
+from scanner.config import RESULTS_DIR
 
 
 def print_report(visited, all_findings, all_forms):
@@ -25,11 +25,10 @@ def print_report(visited, all_findings, all_forms):
         print(f"  {f['method'].upper()} {f['action']}  inputs: {names}")
 
 
-def save_json(visited, all_findings, all_forms, started):
+def save_json(target, active, visited, all_findings, all_forms, started):
     """Write the scan results to results/scan_<timestamp>.json. Returns the file path."""
     finished = datetime.now()
 
-    # count findings per severity
     summary = {}
     for finding in all_findings:
         severity = finding["severity"]
@@ -37,16 +36,16 @@ def save_json(visited, all_findings, all_forms, started):
 
     data = {
         "scan": {
-            "target": TARGET,
+            "target": target,
             "started": started.isoformat(timespec="seconds"),
             "finished": finished.isoformat(timespec="seconds"),
-            "active_checks": ACTIVE_CHECKS,
+            "active_checks": active,
             "pages_scanned": len(visited),
         },
         "summary": summary,
         "findings": all_findings,
         "forms": all_forms,
-        "pages": sorted(visited),          # a set can't be saved as JSON, so make it a sorted list
+        "pages": sorted(visited),
     }
 
     os.makedirs(RESULTS_DIR, exist_ok=True)
